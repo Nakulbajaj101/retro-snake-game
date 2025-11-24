@@ -142,13 +142,13 @@ export const SnakeGame = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Clear canvas
-    ctx.fillStyle = "hsl(var(--game-bg))";
+    // Clear canvas with light background
+    ctx.fillStyle = "#f0f7ff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw grid
-    ctx.strokeStyle = "hsl(var(--game-border))";
-    ctx.lineWidth = 0.5;
+    // Draw subtle grid
+    ctx.strokeStyle = "#d1e3f5";
+    ctx.lineWidth = 1;
     for (let i = 0; i <= GRID_SIZE; i++) {
       ctx.beginPath();
       ctx.moveTo(i * CELL_SIZE, 0);
@@ -160,37 +160,82 @@ export const SnakeGame = () => {
       ctx.stroke();
     }
 
-    // Draw food
-    ctx.fillStyle = "hsl(var(--glow))";
-    ctx.shadowColor = "hsl(var(--glow))";
-    ctx.shadowBlur = 10;
-    ctx.fillRect(food.x * CELL_SIZE + 2, food.y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+    // Draw food (bright orange circle with pattern)
+    const foodX = food.x * CELL_SIZE + CELL_SIZE / 2;
+    const foodY = food.y * CELL_SIZE + CELL_SIZE / 2;
+    
+    // Outer circle
+    ctx.fillStyle = "#ff6b35";
+    ctx.beginPath();
+    ctx.arc(foodX, foodY, CELL_SIZE / 2 - 2, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Inner circle for pattern
+    ctx.fillStyle = "#ff8c61";
+    ctx.beginPath();
+    ctx.arc(foodX, foodY, CELL_SIZE / 4, 0, 2 * Math.PI);
+    ctx.fill();
 
-    // Draw snake
+    // Draw snake with clear colors
     snake.forEach((segment, index) => {
-      ctx.fillStyle = index === 0 ? "hsl(var(--glow-intense))" : "hsl(var(--glow))";
-      ctx.shadowColor = "hsl(var(--glow))";
-      ctx.shadowBlur = index === 0 ? 15 : 8;
-      ctx.fillRect(
-        segment.x * CELL_SIZE + 1,
-        segment.y * CELL_SIZE + 1,
-        CELL_SIZE - 2,
-        CELL_SIZE - 2
-      );
+      const x = segment.x * CELL_SIZE;
+      const y = segment.y * CELL_SIZE;
+      
+      if (index === 0) {
+        // Snake head - darker teal with eyes
+        ctx.fillStyle = "#00a896";
+        ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+        
+        // Draw eyes based on direction
+        ctx.fillStyle = "#ffffff";
+        const eyeSize = 3;
+        const eyeOffset = 6;
+        
+        if (direction.x === 1) { // Right
+          ctx.fillRect(x + CELL_SIZE - eyeOffset, y + 5, eyeSize, eyeSize);
+          ctx.fillRect(x + CELL_SIZE - eyeOffset, y + CELL_SIZE - 8, eyeSize, eyeSize);
+        } else if (direction.x === -1) { // Left
+          ctx.fillRect(x + eyeOffset - eyeSize, y + 5, eyeSize, eyeSize);
+          ctx.fillRect(x + eyeOffset - eyeSize, y + CELL_SIZE - 8, eyeSize, eyeSize);
+        } else if (direction.y === -1) { // Up
+          ctx.fillRect(x + 5, y + eyeOffset - eyeSize, eyeSize, eyeSize);
+          ctx.fillRect(x + CELL_SIZE - 8, y + eyeOffset - eyeSize, eyeSize, eyeSize);
+        } else { // Down
+          ctx.fillRect(x + 5, y + CELL_SIZE - eyeOffset, eyeSize, eyeSize);
+          ctx.fillRect(x + CELL_SIZE - 8, y + CELL_SIZE - eyeOffset, eyeSize, eyeSize);
+        }
+      } else {
+        // Snake body - lighter teal with stripes
+        ctx.fillStyle = "#02c39a";
+        ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+        
+        // Add stripe pattern for texture
+        ctx.fillStyle = "#05d9b8";
+        ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, 3);
+      }
+      
+      // Border for each segment
+      ctx.strokeStyle = "#028174";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
     });
-
-    ctx.shadowBlur = 0;
-  }, [snake, food]);
+  }, [snake, food, direction]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-6 p-4">
-      <div className="text-center space-y-2">
-        <h1 className="text-5xl font-bold retro-glow-intense mb-2 tracking-wider">
-          SNAKE
+    <div className="flex flex-col items-center justify-center min-h-screen gap-6 p-4 bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="text-center space-y-3">
+        <h1 className="text-6xl font-bold text-primary mb-2 tracking-wide drop-shadow-lg">
+          🐍 SNAKE GAME
         </h1>
-        <div className="flex gap-8 justify-center text-xl retro-glow">
-          <div>SCORE: {score}</div>
-          <div>HIGH: {highScore}</div>
+        <div className="flex gap-8 justify-center text-2xl font-bold">
+          <div className="bg-white px-6 py-3 rounded-lg shadow-md border-2 border-primary">
+            <span className="text-foreground">Score: </span>
+            <span className="text-primary">{score}</span>
+          </div>
+          <div className="bg-white px-6 py-3 rounded-lg shadow-md border-2 border-secondary">
+            <span className="text-foreground">Best: </span>
+            <span className="text-secondary">{highScore}</span>
+          </div>
         </div>
       </div>
 
@@ -199,35 +244,39 @@ export const SnakeGame = () => {
           ref={canvasRef}
           width={GRID_SIZE * CELL_SIZE}
           height={GRID_SIZE * CELL_SIZE}
-          className="border-4 border-primary retro-box-glow bg-[hsl(var(--game-bg))]"
+          className="border-4 border-primary rounded-lg shadow-2xl bg-white"
         />
         
         {(gameOver || isPaused) && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/90">
-            <div className="text-center space-y-4 p-8">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-lg backdrop-blur-sm">
+            <div className="text-center space-y-6 p-8">
               {gameOver ? (
                 <>
-                  <h2 className="text-4xl font-bold retro-glow-intense animate-pulse-glow">
-                    GAME OVER
+                  <h2 className="text-5xl font-bold text-destructive animate-bounce-small">
+                    😢 GAME OVER!
                   </h2>
-                  <p className="text-xl retro-glow">SCORE: {score}</p>
+                  <p className="text-3xl font-bold text-foreground">
+                    Your Score: <span className="text-primary">{score}</span>
+                  </p>
                   <Button
                     onClick={resetGame}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 retro-glow font-bold px-8 py-6 text-lg"
+                    size="lg"
+                    className="bg-primary text-white hover:bg-primary/90 font-bold px-10 py-7 text-xl rounded-full shadow-lg"
                   >
-                    PRESS SPACE TO RESTART
+                    🎮 Play Again!
                   </Button>
                 </>
               ) : (
                 <>
-                  <h2 className="text-4xl font-bold retro-glow-intense animate-pulse-glow">
-                    PAUSED
+                  <h2 className="text-5xl font-bold text-primary animate-bounce-small">
+                    🎮 Ready?
                   </h2>
                   <Button
                     onClick={() => setIsPaused(false)}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 retro-glow font-bold px-8 py-6 text-lg"
+                    size="lg"
+                    className="bg-primary text-white hover:bg-primary/90 font-bold px-10 py-7 text-xl rounded-full shadow-lg"
                   >
-                    PRESS SPACE TO START
+                    ▶️ Start Game!
                   </Button>
                 </>
               )}
@@ -236,9 +285,13 @@ export const SnakeGame = () => {
         )}
       </div>
 
-      <div className="text-center text-sm retro-glow space-y-1 max-w-md">
-        <p>ARROW KEYS or WASD TO MOVE</p>
-        <p>SPACE or P TO PAUSE</p>
+      <div className="text-center space-y-2 bg-white px-8 py-4 rounded-lg shadow-md border-2 border-border">
+        <p className="text-lg font-semibold text-foreground">
+          ⌨️ Use Arrow Keys or WASD to move
+        </p>
+        <p className="text-lg font-semibold text-foreground">
+          ⏸️ Press Space or P to pause
+        </p>
       </div>
     </div>
   );

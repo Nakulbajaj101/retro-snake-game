@@ -80,26 +80,19 @@ export default {
             height: "0",
           },
         },
-        "pulse-glow": {
+        "bounce-small": {
           "0%, 100%": {
-            opacity: "1",
-            textShadow: "0 0 10px hsl(var(--glow)), 0 0 20px hsl(var(--glow))",
+            transform: "scale(1)",
           },
           "50%": {
-            opacity: "0.8",
-            textShadow: "0 0 15px hsl(var(--glow-intense)), 0 0 30px hsl(var(--glow-intense))",
+            transform: "scale(1.1)",
           },
-        },
-        "flicker": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.95" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
-        "flicker": "flicker 0.15s ease-in-out infinite",
+        "bounce-small": "bounce-small 0.5s ease-in-out infinite",
       },
     },
   },
