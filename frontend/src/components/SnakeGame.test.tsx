@@ -1,8 +1,12 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@/test/utils';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SnakeGame } from './SnakeGame';
 
 describe('SnakeGame', () => {
+    beforeEach(() => {
+        localStorage.clear();
+    });
+
     it('renders game title and initial score', () => {
         render(<SnakeGame />);
         expect(screen.getByText(/SNAKE GAME/i)).toBeInTheDocument();

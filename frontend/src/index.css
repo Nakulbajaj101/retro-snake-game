@@ -2,49 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    /* Colorful Child-Friendly Theme */
-    --background: 210 100% 97%;
-    --foreground: 220 40% 20%;
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 40% 20%;
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 40% 20%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 213 31% 91%;
 
-    --primary: 220 90% 56%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 280 70% 65%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 220 20% 50%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 45 100% 55%;
-    --accent-foreground: 220 40% 20%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 70% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 220 20% 85%;
-    --input: 220 20% 85%;
-    --ring: 220 90% 56%;
-
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    
     --radius: 0.5rem;
+    
+    /* Game specific vars - Default (Neon Green) */
+    --snake-color: 142 76% 36%;
+    --food-color: 0 84% 60%;
+    --grid-color: 217.2 32.6% 17.5%;
+  }
 
-    /* Game specific colors */
-    --game-bg: 210 100% 98%;
-    --game-border: 220 20% 85%;
-    --snake-head: 160 85% 45%;
-    --snake-body: 160 70% 55%;
-    --food: 15 100% 60%;
+  .neon-green {
+    --snake-color: 142 70% 50%;
+    --food-color: 0 100% 60%;
+    --primary: 142 70% 50%;
+    --ring: 142 70% 50%;
+  }
+
+  .cyber-punk {
+    --snake-color: 190 100% 50%;
+    --food-color: 320 100% 50%;
+    --primary: 320 100% 50%;
+    --ring: 190 100% 50%;
+    --background: 260 50% 10%;
+  }
+
+  .retro-wave {
+    --snake-color: 300 100% 50%;
+    --food-color: 180 100% 50%;
+    --primary: 300 100% 50%;
+    --ring: 300 100% 50%;
+    --background: 280 60% 15%;
+  }
+  
+  .midnight-blue {
+    --snake-color: 210 100% 60%;
+    --food-color: 40 100% 60%;
+    --primary: 210 100% 60%;
+    --ring: 210 100% 60%;
+    --background: 230 40% 10%;
+  }
+  
+  .sunset-orange {
+    --snake-color: 20 100% 60%;
+    --food-color: 280 80% 60%;
+    --primary: 20 100% 60%;
+    --ring: 20 100% 60%;
+    --background: 10 30% 10%;
   }
 }
 
@@ -52,8 +84,7 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
   }
 }

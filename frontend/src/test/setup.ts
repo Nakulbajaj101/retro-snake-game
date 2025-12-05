@@ -1,5 +1,27 @@
 import '@testing-library/jest-dom';
 
+// Mock localStorage
+const localStorageMock = (() => {
+    let store: Record<string, string> = {};
+
+    return {
+        getItem: (key: string) => store[key] || null,
+        setItem: (key: string, value: string) => {
+            store[key] = value.toString();
+        },
+        removeItem: (key: string) => {
+            delete store[key];
+        },
+        clear: () => {
+            store = {};
+        },
+    };
+})();
+
+Object.defineProperty(window, 'localStorage', {
+    value: localStorageMock,
+});
+
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: (query: any) => ({
@@ -19,6 +41,7 @@ HTMLCanvasElement.prototype.getContext = (() => {
     return {
         fillStyle: '',
         fillRect: () => { },
+        clearRect: () => { },
         strokeStyle: '',
         lineWidth: 0,
         beginPath: () => { },
@@ -28,5 +51,7 @@ HTMLCanvasElement.prototype.getContext = (() => {
         arc: () => { },
         fill: () => { },
         strokeRect: () => { },
+        shadowBlur: 0,
+        shadowColor: '',
     } as any;
 }) as any;

@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "./ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthDialog } from "@/components/AuthDialog";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 20;
@@ -19,7 +24,11 @@ export const SnakeGame = () => {
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [isPaused, setIsPaused] = useState(true);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const gameLoopRef = useRef<NodeJS.Timeout>();
+  const { user, isAuthenticated, logout } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const generateFood = useCallback((currentSnake: Position[]) => {
     let newFood: Position;
@@ -41,7 +50,28 @@ export const SnakeGame = () => {
     setGameOver(false);
     setScore(0);
     setIsPaused(false);
+    setScoreSubmitted(false);
   }, [generateFood]);
+
+  const handleSubmitScore = useCallback(async () => {
+    if (!isAuthenticated || scoreSubmitted || score === 0) return;
+
+    try {
+      await api.submitScore(score);
+      setScoreSubmitted(true);
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      toast({
+        title: 'Score Submitted!',
+        description: `Your score of ${score} has been saved to the leaderboard.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to submit score',
+        variant: 'destructive',
+      });
+    }
+  }, [isAuthenticated, score, scoreSubmitted, toast, queryClient]);
 
   const checkCollision = useCallback((head: Position, body: Position[]) => {
     // Wall collision
@@ -67,6 +97,10 @@ export const SnakeGame = () => {
         if (score > highScore) {
           setHighScore(score);
         }
+        // Submit score when game ends
+        if (isAuthenticated && score > 0) {
+          handleSubmitScore();
+        }
         return prevSnake;
       }
 
@@ -87,6 +121,17 @@ export const SnakeGame = () => {
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      // Don't capture keys if user is typing in an input, textarea, or select
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
       if (gameOver && (e.key === " " || e.key === "Enter")) {
         resetGame();
         return;
@@ -163,13 +208,13 @@ export const SnakeGame = () => {
     // Draw food (bright orange circle with pattern)
     const foodX = food.x * CELL_SIZE + CELL_SIZE / 2;
     const foodY = food.y * CELL_SIZE + CELL_SIZE / 2;
-    
+
     // Outer circle
     ctx.fillStyle = "#ff6b35";
     ctx.beginPath();
     ctx.arc(foodX, foodY, CELL_SIZE / 2 - 2, 0, 2 * Math.PI);
     ctx.fill();
-    
+
     // Inner circle for pattern
     ctx.fillStyle = "#ff8c61";
     ctx.beginPath();
@@ -180,17 +225,17 @@ export const SnakeGame = () => {
     snake.forEach((segment, index) => {
       const x = segment.x * CELL_SIZE;
       const y = segment.y * CELL_SIZE;
-      
+
       if (index === 0) {
         // Snake head - darker teal with eyes
         ctx.fillStyle = "#00a896";
         ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
-        
+
         // Draw eyes based on direction
         ctx.fillStyle = "#ffffff";
         const eyeSize = 3;
         const eyeOffset = 6;
-        
+
         if (direction.x === 1) { // Right
           ctx.fillRect(x + CELL_SIZE - eyeOffset, y + 5, eyeSize, eyeSize);
           ctx.fillRect(x + CELL_SIZE - eyeOffset, y + CELL_SIZE - 8, eyeSize, eyeSize);
@@ -208,12 +253,12 @@ export const SnakeGame = () => {
         // Snake body - lighter teal with stripes
         ctx.fillStyle = "#02c39a";
         ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4);
-        
+
         // Add stripe pattern for texture
         ctx.fillStyle = "#05d9b8";
         ctx.fillRect(x + 2, y + 2, CELL_SIZE - 4, 3);
       }
-      
+
       // Border for each segment
       ctx.strokeStyle = "#028174";
       ctx.lineWidth = 1;
@@ -222,11 +267,35 @@ export const SnakeGame = () => {
   }, [snake, food, direction]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-6 p-4 bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="flex flex-col items-center justify-center gap-6 p-4">
       <div className="text-center space-y-3">
         <h1 className="text-6xl font-bold text-primary mb-2 tracking-wide drop-shadow-lg">
           🐍 SNAKE GAME
         </h1>
+
+        {/* User Info */}
+        <div className="flex items-center justify-center gap-4">
+          {isAuthenticated ? (
+            <div className="bg-white px-6 py-2 rounded-lg shadow-md border-2 border-green-500">
+              <span className="text-sm text-foreground">👤 {user?.username}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={logout}
+                className="ml-2 text-xs"
+              >
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <AuthDialog>
+              <Button variant="outline" className="border-2 border-primary">
+                🔐 Login / Register
+              </Button>
+            </AuthDialog>
+          )}
+        </div>
+
         <div className="flex gap-8 justify-center text-2xl font-bold">
           <div className="bg-white px-6 py-3 rounded-lg shadow-md border-2 border-primary">
             <span className="text-foreground">Score: </span>
@@ -246,7 +315,7 @@ export const SnakeGame = () => {
           height={GRID_SIZE * CELL_SIZE}
           className="border-4 border-primary rounded-lg shadow-2xl bg-white"
         />
-        
+
         {(gameOver || isPaused) && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-lg backdrop-blur-sm">
             <div className="text-center space-y-6 p-8">
@@ -258,6 +327,18 @@ export const SnakeGame = () => {
                   <p className="text-3xl font-bold text-foreground">
                     Your Score: <span className="text-primary">{score}</span>
                   </p>
+                  {scoreSubmitted && (
+                    <p className="text-sm text-green-600 font-semibold">
+                      ✅ Score saved to leaderboard!
+                    </p>
+                  )}
+                  {!isAuthenticated && score > 0 && (
+                    <AuthDialog onSuccess={handleSubmitScore}>
+                      <Button variant="outline" className="mb-2">
+                        🔐 Login to Save Score
+                      </Button>
+                    </AuthDialog>
+                  )}
                   <Button
                     onClick={resetGame}
                     size="lg"
