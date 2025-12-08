@@ -1,6 +1,6 @@
 import { ThemeProvider } from "@/components/theme-provider"
 import { ProfileSettings } from "@/components/profile-settings"
-import { GameBoard } from "@/components/game-board"
+import { SnakeGame } from "@/components/SnakeGame"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider, useAuth } from "@/contexts/AuthContext"
 import { AuthDialog } from "@/components/AuthDialog"
@@ -54,7 +54,7 @@ function App() {
               Retro Snake
             </h1>
             <div className="flex flex-col lg:flex-row gap-8 items-start justify-center w-full max-w-6xl">
-              <GameBoard />
+              <SnakeGame />
               <div className="w-full max-w-md">
                 <Leaderboard />
               </div>

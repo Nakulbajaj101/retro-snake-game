@@ -280,7 +280,7 @@ export const SnakeGame = () => {
     <div className="flex flex-col items-center justify-center gap-6 p-4">
       <div className="text-center space-y-3">
         <h1 className="text-6xl font-bold text-primary mb-2 tracking-wide drop-shadow-lg">
-          🐍 SNAKE GAME (DEBUG MODE)
+          🐍 SNAKE GAME
         </h1>
 
         {/* User Info */}
@@ -350,15 +350,6 @@ export const SnakeGame = () => {
                     Your Score: <span className="text-primary">{score}</span>
                   </p>
 
-                  {/* Debug Info - Always visible on Game Over */}
-                  <div className="bg-red-600 text-white p-4 rounded-lg text-sm font-mono my-4 text-left inline-block border-4 border-yellow-400">
-                    <p className="font-bold underline">!!! DEBUG MODE !!!</p>
-                    <p>Game Over: {gameOver ? 'YES' : 'NO'}</p>
-                    <p>Auth: {isAuthenticated ? 'LOGGED IN' : 'GUEST'}</p>
-                    <p>Score: {score}</p>
-                    <p>Dialog Request: {showLoginDialog ? 'OPEN' : 'CLOSED'}</p>
-                  </div>
-
                   {scoreSubmitted && (
                     <p className="text-sm text-green-600 font-semibold">
                       ✅ Score saved to leaderboard!
@@ -414,6 +405,6 @@ export const SnakeGame = () => {
           ⏸️ Press Space or P to pause
         </p>
       </div>
-    </div>
+    </div >
   );
 };
