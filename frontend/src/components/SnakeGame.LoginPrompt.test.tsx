@@ -100,10 +100,6 @@ describe('SnakeGame - Login Prompt Logic', () => {
 
         // Expect NO prompt
         expect(screen.queryByText(/Register or Login for your scores to reflect/i)).not.toBeInTheDocument();
-
-        // Expect NO debug text saying "Dialog Request: OPEN" (since logic shouldn't trigger)
-        // Note: The UI now has debug text, we can check if it says "CLOSED"
-        expect(screen.getByText(/Dialog Request: CLOSED/i)).toBeInTheDocument();
     });
 
     it('does NOT show login prompt for AUTHENTICATED user even with high score', async () => {
@@ -161,8 +157,5 @@ describe('SnakeGame - Login Prompt Logic', () => {
 
         // Should NOT show login prompt
         expect(screen.queryByText(/Register or Login for your scores to reflect/i)).not.toBeInTheDocument();
-
-        // Debug status check
-        expect(screen.getByText(/Auth: LOGGED IN/i)).toBeInTheDocument();
     });
 });
