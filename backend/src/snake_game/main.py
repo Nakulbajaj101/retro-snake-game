@@ -33,6 +33,7 @@ app.add_middleware(
         "https://snake-frontend-kxlm.onrender.com",
         "http://localhost:5173",  # Vite dev server
         "http://localhost:3000",
+        "http://localhost:8080",  # Vite e2e test server
     ],
     allow_credentials=True,
     allow_methods=["*"],

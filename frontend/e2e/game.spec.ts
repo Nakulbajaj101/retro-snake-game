@@ -18,7 +18,7 @@ test.describe('Game', () => {
         await page.goto('/');
 
         // Make sure we're not logged in
-        await expect(page.locator('text=Login / Register')).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Login / Register', exact: true })).toBeVisible();
 
         // Start game
         await page.click('text=Start Game!');

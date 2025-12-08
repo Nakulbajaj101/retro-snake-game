@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerUser, loginUser, generateRandomUsername } from './helpers';
+import { registerUser, loginUser, generateRandomUsername, getApiBaseUrl } from './helpers';
 
 test.describe('API Contract Tests', () => {
     test('should return correct User object structure from registration', async ({ page }) => {
@@ -9,14 +9,15 @@ test.describe('API Contract Tests', () => {
         const password = 'TestP@ss123';
 
         // Register user and capture the API response
-        const userResponse = await page.evaluate(async ({ username, password }) => {
-            const response = await fetch('http://localhost:3000/api/auth/register', {
+        const apiUrl = getApiBaseUrl();
+        const userResponse = await page.evaluate(async ({ username, password, apiUrl }) => {
+            const response = await fetch(`${apiUrl}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
             });
             return response.json();
-        }, { username, password });
+        }, { username, password, apiUrl });
 
         // Verify User object structure matches frontend interface
         expect(userResponse).toHaveProperty('id');
@@ -40,14 +41,15 @@ test.describe('API Contract Tests', () => {
         await page.waitForSelector('text=Login / Register');
 
         // Login and capture API response
-        const loginResponse = await page.evaluate(async ({ username, password }) => {
-            const response = await fetch('http://localhost:3000/api/auth/login', {
+        const apiUrl = getApiBaseUrl();
+        const loginResponse = await page.evaluate(async ({ username, password, apiUrl }) => {
+            const response = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
             });
             return response.json();
-        }, { username, password });
+        }, { username, password, apiUrl });
 
         // Verify LoginResponse structure matches frontend interface
         expect(loginResponse).toHaveProperty('token');
@@ -72,9 +74,10 @@ test.describe('API Contract Tests', () => {
         await registerUser(page, username, password);
 
         // Get token and submit score
-        const scoreResponse = await page.evaluate(async ({ username, password }) => {
+        const apiUrl = getApiBaseUrl();
+        const scoreResponse = await page.evaluate(async ({ username, password, apiUrl }) => {
             // Login to get token
-            const loginRes = await fetch('http://localhost:3000/api/auth/login', {
+            const loginRes = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
@@ -83,7 +86,7 @@ test.describe('API Contract Tests', () => {
             const token = loginData.token;
 
             // Submit score
-            const scoreRes = await fetch('http://localhost:3000/api/scores', {
+            const scoreRes = await fetch(`${apiUrl}/scores`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -92,7 +95,7 @@ test.describe('API Contract Tests', () => {
                 body: JSON.stringify({ score: 150 }),
             });
             return scoreRes.json();
-        }, { username, password });
+        }, { username, password, apiUrl });
 
         // Verify Score object structure matches frontend interface
         expect(scoreResponse).toHaveProperty('id');
@@ -115,10 +118,11 @@ test.describe('API Contract Tests', () => {
         await page.goto('/');
 
         // Fetch leaderboard directly
-        const leaderboardResponse = await page.evaluate(async () => {
-            const response = await fetch('http://localhost:3000/api/scores?limit=10');
+        const apiUrl = getApiBaseUrl();
+        const leaderboardResponse = await page.evaluate(async (apiUrl) => {
+            const response = await fetch(`${apiUrl}/scores?limit=10`);
             return response.json();
-        });
+        }, apiUrl);
 
         // Verify it's an array
         expect(Array.isArray(leaderboardResponse)).toBe(true);
@@ -151,13 +155,14 @@ test.describe('API Contract Tests', () => {
         await page.waitForSelector('text=Login / Register');
 
         // Try to register duplicate and capture error
-        const errorResponse = await page.evaluate(async ({ username, password }) => {
-            const response = await fetch('http://localhost:3000/api/auth/register', {
+        const apiUrl = getApiBaseUrl();
+        const errorResponse = await page.evaluate(async ({ username, password, apiUrl }) => {
+            const response = await fetch(`${apiUrl}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
             });
-            
+
             if (!response.ok) {
                 return {
                     status: response.status,
@@ -165,7 +170,7 @@ test.describe('API Contract Tests', () => {
                 };
             }
             return { status: response.status, error: null };
-        }, { username, password });
+        }, { username, password, apiUrl });
 
         // Verify error format
         expect(errorResponse.status).toBe(409); // Conflict
@@ -186,13 +191,14 @@ test.describe('API Contract Tests', () => {
         await page.waitForSelector('text=Login / Register');
 
         // Try invalid login and capture error
-        const errorResponse = await page.evaluate(async ({ username }) => {
-            const response = await fetch('http://localhost:3000/api/auth/login', {
+        const apiUrl = getApiBaseUrl();
+        const errorResponse = await page.evaluate(async ({ username, apiUrl }) => {
+            const response = await fetch(`${apiUrl}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password: 'wrongpassword' }),
             });
-            
+
             if (!response.ok) {
                 return {
                     status: response.status,
@@ -200,7 +206,7 @@ test.describe('API Contract Tests', () => {
                 };
             }
             return { status: response.status, error: null };
-        }, { username });
+        }, { username, apiUrl });
 
         // Verify error format
         expect(errorResponse.status).toBe(401); // Unauthorized
@@ -212,13 +218,14 @@ test.describe('API Contract Tests', () => {
         await page.goto('/');
 
         // Try to submit score without authentication
-        const errorResponse = await page.evaluate(async () => {
-            const response = await fetch('http://localhost:3000/api/scores', {
+        const apiUrl = getApiBaseUrl();
+        const errorResponse = await page.evaluate(async (apiUrl) => {
+            const response = await fetch(`${apiUrl}/scores`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ score: 100 }),
             });
-            
+
             if (!response.ok) {
                 return {
                     status: response.status,
@@ -226,7 +233,7 @@ test.describe('API Contract Tests', () => {
                 };
             }
             return { status: response.status, error: null };
-        });
+        }, apiUrl);
 
         // Verify error format
         expect(errorResponse.status).toBe(401); // Unauthorized

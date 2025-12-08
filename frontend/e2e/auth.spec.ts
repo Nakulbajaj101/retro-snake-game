@@ -10,8 +10,8 @@ test.describe('Authentication', () => {
 
         await registerUser(page, username, password);
 
-        // Verify user is logged in
-        await expect(page.locator(`text=${username}`)).toBeVisible();
+        // Verify user is logged in - look for username in the header area
+        await expect(page.getByText(`👤 ${username}`)).toBeVisible();
     });
 
     test('should login an existing user', async ({ page }) => {
@@ -30,7 +30,7 @@ test.describe('Authentication', () => {
         await loginUser(page, username, password);
 
         // Verify user is logged in
-        await expect(page.locator(`text=${username}`)).toBeVisible();
+        await expect(page.getByText(`👤 ${username}`)).toBeVisible();
     });
 
     test('should logout user', async ({ page }) => {
@@ -42,8 +42,8 @@ test.describe('Authentication', () => {
         await registerUser(page, username, password);
         await logout(page);
 
-        // Verify login button is visible
-        await expect(page.locator('text=Login / Register')).toBeVisible();
+        // Verify login button is visible - use first() to avoid strict mode error
+        await expect(page.getByRole('button', { name: 'Login / Register', exact: true })).toBeVisible();
     });
 
     test('should persist session after page reload', async ({ page }) => {
@@ -58,13 +58,13 @@ test.describe('Authentication', () => {
         await page.reload();
 
         // Verify user is still logged in
-        await expect(page.locator(`text=${username}`)).toBeVisible();
+        await expect(page.getByText(`👤 ${username}`)).toBeVisible();
     });
 
     test('should show error for invalid credentials', async ({ page }) => {
         await page.goto('/');
 
-        await page.click('text=Login / Register');
+        await page.getByRole('button', { name: 'Login / Register', exact: true }).click();
         await page.fill('input[type="text"]', 'nonexistent');
         await page.fill('input[type="password"]', 'wrongpass');
         await page.click('button[type="submit"]');

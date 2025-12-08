@@ -10,7 +10,7 @@ test.describe('Error Handling Integration', () => {
 
         // Register first user
         await registerUser(page, username, password);
-        await expect(page.locator(`text=${username}`)).toBeVisible();
+        await expect(page.getByText(`👤 ${username}`)).toBeVisible();
 
         // Logout
         await page.click('text=Logout');
@@ -32,9 +32,9 @@ test.describe('Error Handling Integration', () => {
 
         // Wait for error message
         await expect(page.locator('text=/Error|already exists|Username/i').first()).toBeVisible({ timeout: 5000 });
-        
-        // Verify we're still on the registration form (not logged in)
-        await expect(page.locator('text=Login / Register')).toBeVisible();
+
+        // Verify we're still not logged in (username should not appear in header)
+        await expect(page.getByText(`👤 ${username}`)).not.toBeVisible();
     });
 
     test('should show error for invalid login credentials', async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe('Error Handling Integration', () => {
 
         // Register user first
         await registerUser(page, username, password);
-        await expect(page.locator(`text=${username}`)).toBeVisible();
+        await expect(page.getByText(`👤 ${username}`)).toBeVisible();
 
         // Logout
         await page.click('text=Logout');
@@ -68,8 +68,8 @@ test.describe('Error Handling Integration', () => {
         // Wait for error message
         await expect(page.locator('text=/Error|Invalid|failed/i').first()).toBeVisible({ timeout: 5000 });
 
-        // Verify we're still logged out
-        await expect(page.locator('text=Login / Register')).toBeVisible();
+        // Verify we're still logged out (username should not appear in header)
+        await expect(page.getByText(`👤 ${username}`)).not.toBeVisible();
     });
 
     test('should show error for nonexistent user login', async ({ page }) => {

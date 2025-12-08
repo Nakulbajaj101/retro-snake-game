@@ -10,7 +10,7 @@ test.describe('Full User Journey', () => {
 
         // Step 1: Register new user
         await registerUser(page, username, password);
-        await expect(page.locator(`text=${username}`)).toBeVisible();
+        await expect(page.getByText(`👤 ${username}`)).toBeVisible();
 
         // Step 2: Verify leaderboard is visible
         await expect(page.locator('text=🏆 Leaderboard')).toBeVisible();
@@ -26,22 +26,22 @@ test.describe('Full User Journey', () => {
         // Step 5: Logout
         await page.click('text=Pause', { force: true }); // Pause game first
         await logout(page);
-        await expect(page.locator('text=Login / Register')).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Login / Register', exact: true })).toBeVisible();
 
         // Step 6: Login again
         await loginUser(page, username, password);
-        await expect(page.locator(`text=${username}`)).toBeVisible();
+        await expect(page.getByText(`👤 ${username}`)).toBeVisible();
 
         // Step 7: Verify session persists after reload
         await page.reload();
-        await expect(page.locator(`text=${username}`)).toBeVisible();
+        await expect(page.getByText(`👤 ${username}`)).toBeVisible();
     });
 
     test('guest user flow: play -> prompt to login -> register -> continue', async ({ page }) => {
         await page.goto('/');
 
         // Verify we're not logged in
-        await expect(page.locator('text=Login / Register')).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Login / Register', exact: true })).toBeVisible();
 
         // Start game as guest
         await page.click('text=Start Game!');

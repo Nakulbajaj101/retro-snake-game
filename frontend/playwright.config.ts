@@ -1,5 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Skip starting webServers if:
+// - Running in CI (uses docker-compose)
+// - DOCKER_RUNNING is set (local docker-compose is running)
+const skipWebServers = !!process.env.CI || !!process.env.DOCKER_RUNNING;
+
 export default defineConfig({
     testDir: './e2e',
     fullyParallel: true,
@@ -19,11 +24,11 @@ export default defineConfig({
         },
     ],
 
-    // Only start webServers when NOT in CI (CI uses docker-compose)
-    webServer: process.env.CI ? undefined : [
+    // Start webServers only for local development without docker-compose
+    webServer: skipWebServers ? undefined : [
         {
-            command: 'cd ../backend && uv run uvicorn main:app --host 0.0.0.0 --port 3000',
-            url: 'http://localhost:3000',
+            command: 'cd ../backend && uv run uvicorn snake_game.main:app --host 0.0.0.0 --port 8000',
+            url: 'http://localhost:8000',
             reuseExistingServer: true,
             timeout: 120000,
         },

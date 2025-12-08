@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerUser, generateRandomUsername } from './helpers';
+import { registerUser, generateRandomUsername, getApiBaseUrl } from './helpers';
 
 test.describe('Score Submission Integration', () => {
     test('should submit score after game and display on leaderboard', async ({ page }) => {
@@ -10,7 +10,7 @@ test.describe('Score Submission Integration', () => {
 
         // Register and login
         await registerUser(page, username, password);
-        await expect(page.locator(`text=${username}`)).toBeVisible();
+        await expect(page.getByText(`👤 ${username}`)).toBeVisible();
 
         // Start game
         await page.click('text=Start Game!');
@@ -25,7 +25,7 @@ test.describe('Score Submission Integration', () => {
         await page.waitForTimeout(200);
         await page.keyboard.press('ArrowRight');
         await page.waitForTimeout(200);
-        
+
         // Continue moving until game over (snake hits wall)
         // Move right repeatedly to hit the wall
         for (let i = 0; i < 20; i++) {
@@ -46,12 +46,15 @@ test.describe('Score Submission Integration', () => {
         // The leaderboard should update automatically
         const leaderboard = page.locator('text=🏆 Leaderboard').locator('..');
         await expect(leaderboard).toBeVisible();
-        
+
         // Check if the username appears in leaderboard (it might take a moment to load)
         await page.waitForTimeout(2000); // Wait for leaderboard to refresh
-        
+
         // Verify the user's score is visible (either in leaderboard or in game over screen)
-        await expect(page.locator(`text=${username}`).or(page.locator('text=/Score Submitted|Score saved/i'))).toBeVisible({ timeout: 5000 });
+        // Check if username appears in leaderboard or if score submission message is shown
+        const usernameInLeaderboard = page.locator('.font-bold.text-primary', { hasText: username });
+        const scoreSubmittedMessage = page.locator('text=/Score Submitted|Score saved/i');
+        await expect(usernameInLeaderboard.or(scoreSubmittedMessage).first()).toBeVisible({ timeout: 5000 });
     });
 
     test('should persist score on leaderboard after page reload', async ({ page }) => {
@@ -63,16 +66,17 @@ test.describe('Score Submission Integration', () => {
 
         // Register and login
         await registerUser(page, username, password);
-        await expect(page.locator(`text=${username}`)).toBeVisible();
+        await expect(page.getByText(`👤 ${username}`)).toBeVisible();
 
         // Get token from localStorage
         const token = await page.evaluate(() => localStorage.getItem('token'));
         expect(token).toBeTruthy();
 
         // Submit score directly via API call
-        const scoreSubmitted = await page.evaluate(async ({ token, score }) => {
+        const apiUrl = getApiBaseUrl();
+        const scoreSubmitted = await page.evaluate(async ({ token, score, apiUrl }) => {
             try {
-                const response = await fetch('http://localhost:3000/api/scores', {
+                const response = await fetch(`${apiUrl}/scores`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -88,7 +92,7 @@ test.describe('Score Submission Integration', () => {
                 console.error('Score submission error:', error);
                 return null;
             }
-        }, { token, score: testScore });
+        }, { token, score: testScore, apiUrl });
 
         // Verify score was submitted successfully
         expect(scoreSubmitted).not.toBeNull();
@@ -99,13 +103,13 @@ test.describe('Score Submission Integration', () => {
 
         // Reload page to test persistence
         await page.reload();
-        
+
         // Wait for page to fully load
         await page.waitForLoadState('networkidle');
-        
+
         // Wait for leaderboard to be visible
         await expect(page.locator('text=🏆 Leaderboard')).toBeVisible({ timeout: 10000 });
-        
+
         // Wait for leaderboard to finish loading (wait for "Loading..." to disappear)
         try {
             await page.waitForFunction(() => {
@@ -120,9 +124,9 @@ test.describe('Score Submission Integration', () => {
         await page.waitForTimeout(2000);
 
         // Verify score persists by checking the API directly
-        const leaderboardData = await page.evaluate(async () => {
+        const leaderboardData = await page.evaluate(async (apiUrl) => {
             try {
-                const response = await fetch('http://localhost:3000/api/scores?limit=10');
+                const response = await fetch(`${apiUrl}/scores?limit=10`);
                 if (response.ok) {
                     return await response.json();
                 }
@@ -130,15 +134,15 @@ test.describe('Score Submission Integration', () => {
             } catch (error) {
                 return [];
             }
-        });
+        }, apiUrl);
 
         // Verify the score is in the leaderboard
-        const scoreFound = leaderboardData.some((score: any) => 
+        const scoreFound = leaderboardData.some((score: any) =>
             score.username === username && score.score === testScore
         );
 
         expect(scoreFound).toBeTruthy();
-        
+
         // Also verify it appears in the UI (as a secondary check)
         const scoreInUI = await page.locator(`text=${testScore}`).first().isVisible().catch(() => false);
         const usernameInUI = await page.evaluate((username) => {
@@ -154,7 +158,7 @@ test.describe('Score Submission Integration', () => {
         await page.goto('/');
 
         // Verify we're not logged in
-        await expect(page.locator('text=Login / Register')).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Login / Register', exact: true })).toBeVisible();
 
         // Start game
         await page.click('text=Start Game!');
