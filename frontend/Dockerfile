@@ -42,4 +42,4 @@ USER nginx
 EXPOSE 8080
 
 # Extract the nameserver from /etc/resolv.conf and substitute it into the nginx config
-CMD ["/bin/sh", "-c", "export RESOLVER=$(awk 'BEGIN{ORS=\"\"} /^nameserver/{print $2; exit}' /etc/resolv.conf) && envsubst '${BACKEND_HOST} ${BACKEND_PORT} ${RESOLVER}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "export RESOLVER=$(awk 'BEGIN{ORS=\"\"} /^nameserver/{print $2; exit}' /etc/resolv.conf) && envsubst '${BACKEND_HOST} ${BACKEND_PORT} ${BACKEND_PROTOCOL} ${RESOLVER} ${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]

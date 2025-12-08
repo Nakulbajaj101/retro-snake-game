@@ -27,11 +27,10 @@ services:
           type: web
           name: snake-backend
           property: host
+      - key: BACKEND_PROTOCOL
+        value: https
       - key: BACKEND_PORT
-        fromService:
-          type: web
-          name: snake-backend
-          property: port
+        value: 443
 
 databases:
   - name: snake-db
