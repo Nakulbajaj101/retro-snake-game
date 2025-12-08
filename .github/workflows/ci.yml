@@ -30,7 +30,7 @@ jobs:
         run: |
           docker run --rm -t snake-backend-test pytest -v --tb=short
 
-  # Frontend tests (unit + integration) - run with docker-compose for backend
+  # Frontend tests (unit + integration) - docker-compose for backend, npm for tests
   frontend-tests:
     runs-on: ubuntu-latest
     needs: [backend-tests]

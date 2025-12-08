@@ -22,8 +22,13 @@ describe('API Client - Registration', () => {
 
             const result = await api.register('testuser', 'ValidP@ssw0rd');
 
+            // Check the URL contains the correct path (regardless of base URL)
+            const callUrl = (global.fetch as any).mock.calls[0][0];
+            expect(callUrl).toContain('/auth/register');
+
+            // Check the request options
             expect(global.fetch).toHaveBeenCalledWith(
-                'http://localhost:3000/api/auth/register',
+                expect.stringContaining('/auth/register'),
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

@@ -54,10 +54,13 @@ describe('ProfileSettings', () => {
         fireEvent.click(screen.getByText('Save changes'));
 
         await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledWith('http://localhost:3000/api/users/me', expect.objectContaining({
-                method: 'PUT',
-                body: expect.stringContaining('New Name'),
-            }));
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining('/users/me'),
+                expect.objectContaining({
+                    method: 'PUT',
+                    body: expect.stringContaining('New Name'),
+                })
+            );
         });
     });
 });
