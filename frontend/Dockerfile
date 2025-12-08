@@ -41,5 +41,6 @@ USER nginx
 # Expose port 8080 (must match listen port in nginx.conf)
 EXPOSE 8080
 
-# Substitute PORT variable and start nginx
-CMD ["/bin/sh", "-c", "envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# Substitute environment variables and start nginx
+# BACKEND_URL is constructed from BACKEND_HOST at runtime
+CMD ["/bin/sh", "-c", "export BACKEND_URL=https://${BACKEND_HOST} && envsubst '${PORT} ${BACKEND_URL} ${BACKEND_HOST}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]

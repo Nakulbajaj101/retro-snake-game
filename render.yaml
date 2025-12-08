@@ -23,11 +23,10 @@ services:
     plan: free
     envVars:
       - key: BACKEND_HOST
-        value: snake-backend-a3io.onrender.com
-      - key: BACKEND_PROTOCOL
-        value: https
-      - key: BACKEND_PORT
-        value: 443
+        fromService:
+          type: web
+          name: snake-backend
+          property: host
       - key: PORT
         value: 8080
 
