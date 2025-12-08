@@ -31,7 +31,9 @@ COPY nginx.conf /etc/nginx/nginx.conf.template
 # Nginx Alpine uses 'nginx' user by default
 # We need to change ownership of directories Nginx writes to
 RUN touch /var/run/nginx.pid \
-    && chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx /etc/nginx/conf.d /usr/share/nginx/html
+    && chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx /etc/nginx/conf.d /usr/share/nginx/html \
+    # Remove 'user' directive from default nginx.conf to avoid warning when running as non-root
+    && sed -i '/user  nginx;/d' /etc/nginx/nginx.conf
 
 # Switch to non-root user
 USER nginx
@@ -39,4 +41,5 @@ USER nginx
 # Expose port 8080 (must match listen port in nginx.conf)
 EXPOSE 8080
 
-CMD ["/bin/sh", "-c", "envsubst '${BACKEND_HOST} ${BACKEND_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# Extract the nameserver from /etc/resolv.conf and substitute it into the nginx config
+CMD ["/bin/sh", "-c", "export RESOLVER=$(awk 'BEGIN{ORS=\"\"} /^nameserver/{print $2; exit}' /etc/resolv.conf) && envsubst '${BACKEND_HOST} ${BACKEND_PORT} ${RESOLVER}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
