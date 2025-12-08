@@ -23,14 +23,11 @@ services:
     plan: free
     envVars:
       - key: BACKEND_HOST
-        fromService:
-          type: web
-          name: snake-backend
-          property: host
+        value: snake-backend
       - key: BACKEND_PROTOCOL
-        value: https
+        value: http
       - key: BACKEND_PORT
-        value: 443
+        value: 10000
 
 databases:
   - name: snake-db
