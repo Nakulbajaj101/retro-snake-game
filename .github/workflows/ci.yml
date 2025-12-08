@@ -23,7 +23,6 @@ jobs:
       - name: Build backend test image
         run: |
           docker build -t snake-backend-test \
-            --target builder \
             -f backend/Dockerfile.test \
             backend/
 
