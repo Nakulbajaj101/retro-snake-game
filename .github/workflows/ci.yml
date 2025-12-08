@@ -28,7 +28,7 @@ jobs:
 
       - name: Run backend tests
         run: |
-          docker run --rm snake-backend-test pytest -v
+          docker run --rm -t snake-backend-test pytest -v --tb=short
 
   # Frontend unit tests - run in Docker to match production environment
   frontend-tests:
@@ -44,7 +44,7 @@ jobs:
 
       - name: Run frontend unit tests
         run: |
-          docker run --rm snake-frontend-test npm test -- --run
+          docker run --rm -t snake-frontend-test npm test -- --run --reporter=verbose
 
   # Integration tests - test backend API with database
   integration-tests:
