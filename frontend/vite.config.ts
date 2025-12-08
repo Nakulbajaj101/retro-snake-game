@@ -23,7 +23,6 @@ export default defineConfig(({ mode }) => ({
       "**/node_modules/**",
       "**/dist/**",
       "**/e2e/**",
-      "**/*.integration.test.*",
       "**/.{idea,git,cache,output,temp}/**",
       "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*",
     ],

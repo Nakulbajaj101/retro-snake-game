@@ -30,29 +30,8 @@ jobs:
         run: |
           docker run --rm -t snake-backend-test pytest -v --tb=short
 
-  # Frontend unit tests - run directly on Node.js
+  # Frontend tests (unit + integration) - run with docker-compose for backend
   frontend-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Run frontend unit tests
-        working-directory: frontend
-        run: npm test -- --run --reporter=verbose
-
-  # Integration tests - test backend API with database
-  integration-tests:
     runs-on: ubuntu-latest
     needs: [backend-tests]
     steps:
@@ -61,7 +40,7 @@ jobs:
       - name: Create .env file
         run: cp .env.example .env
 
-      - name: Start services
+      - name: Start backend services
         run: docker compose up -d --build db backend
 
       - name: Wait for backend to be ready
@@ -76,10 +55,22 @@ jobs:
             sleep 2
           done
 
-      - name: Run API health check
-        run: |
-          curl -f http://localhost:8000/ || exit 1
-          curl -f http://localhost:8000/api/scores?limit=5 || exit 1
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: http://localhost:8000/api
+        run: npm test -- --run --reporter=verbose
 
       - name: Show logs on failure
         if: failure()
@@ -92,7 +83,7 @@ jobs:
   # E2E tests - full stack with Playwright
   e2e-tests:
     runs-on: ubuntu-latest
-    needs: [frontend-tests, integration-tests]
+    needs: [frontend-tests]
     steps:
       - uses: actions/checkout@v4
 
