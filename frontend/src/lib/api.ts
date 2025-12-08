@@ -13,6 +13,7 @@ export interface Score {
     id: string;
     user_id: string;
     username: string;
+    display_name?: string;
     avatar?: string;
     score: number;
     created_at: string;

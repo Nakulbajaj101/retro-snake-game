@@ -19,12 +19,26 @@ import { useAuth } from "@/contexts/AuthContext"
 
 export function ProfileSettings() {
     const { theme, setTheme } = useTheme()
-    const [displayName, setDisplayName] = useState("")
-    const [avatar, setAvatar] = useState("avatar-1")
+    const { user, updateUser } = useAuth()
+
+    // Initialize with current user data if available
+    const [displayName, setDisplayName] = useState(user?.display_name || "")
+    const [avatar, setAvatar] = useState(user?.avatar || "avatar-1")
     const [open, setOpen] = useState(false)
 
     const { toast } = useToast()
-    const { updateUser } = useAuth()
+
+    // Update state when user object changes or dialog opens
+    useEffect(() => {
+        if (open && user) {
+            setDisplayName(user.display_name || "")
+            setAvatar(user.avatar || "avatar-1")
+            // We could also sync theme here if we wanted to enforce saved theme
+            if (user.theme_preference && user.theme_preference !== theme) {
+                setTheme(user.theme_preference as any)
+            }
+        }
+    }, [open, user, setTheme]) // Don't include theme in dependency to avoid loops
 
     const handleSave = async () => {
         try {

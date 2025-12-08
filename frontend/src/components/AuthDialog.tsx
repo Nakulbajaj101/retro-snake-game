@@ -14,8 +14,10 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthDialogProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     onSuccess?: () => void;
+    isOpen?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
 interface PasswordStrength {
@@ -28,7 +30,7 @@ interface PasswordStrength {
 const calculatePasswordStrength = (password: string): PasswordStrength => {
     let score = 0;
     const feedback: string[] = [];
-    
+
     if (password.length === 0) {
         return {
             score: 0,
@@ -56,20 +58,20 @@ const calculatePasswordStrength = (password: string): PasswordStrength => {
     // Character variety checks
     if (/[a-z]/.test(password)) score += 1;
     else feedback.push('Add lowercase letters');
-    
+
     if (/[A-Z]/.test(password)) score += 1;
     else feedback.push('Add uppercase letters');
-    
+
     if (/[0-9]/.test(password)) score += 1;
     else feedback.push('Add numbers');
-    
+
     if (/[^a-zA-Z0-9]/.test(password)) score += 1;
     else feedback.push('Add special characters (!@#$%^&*)');
 
     // Determine label and color (score range: 0-5)
     let label = '';
     let color = '';
-    
+
     if (score <= 1) {
         label = 'Very Weak';
         color = 'bg-red-500';
@@ -102,14 +104,24 @@ const passwordPolicies = [
     'Contains at least one special character (!@#$%^&*)',
 ];
 
-export const AuthDialog: React.FC<AuthDialogProps> = ({ children, onSuccess }) => {
+export const AuthDialog: React.FC<AuthDialogProps> = ({ children, onSuccess, isOpen, onOpenChange }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
     const { login, register } = useAuth();
     const { toast } = useToast();
+
+    // Use controlled or uncontrolled state
+    const isControlled = typeof isOpen !== 'undefined';
+    const open = isControlled ? isOpen : internalOpen;
+    const setOpen = isControlled ? onOpenChange : setInternalOpen;
+
+    // Safety check for controlled component usage
+    if (isControlled && !onOpenChange) {
+        console.warn('AuthDialog: isOpen provided but onOpenChange is missing.');
+    }
 
     const passwordStrength = useMemo(() => calculatePasswordStrength(password), [password]);
 
@@ -135,20 +147,20 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ children, onSuccess }) =
                     setIsLoading(false);
                     return;
                 }
-                
+
                 await register(username, password);
                 toast({
                     title: 'Success',
                     description: 'Account created and logged in!',
                 });
             }
-            setOpen(false);
+            setOpen?.(false);
             setUsername('');
             setPassword('');
             onSuccess?.();
         } catch (error: unknown) {
             let errorMessage = 'Authentication failed';
-            
+
             if (error instanceof Error) {
                 errorMessage = error.message;
             } else if (typeof error === 'object' && error !== null) {
@@ -156,7 +168,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ children, onSuccess }) =
                 const apiError = error as { message?: string; detail?: string };
                 errorMessage = apiError.message || apiError.detail || errorMessage;
             }
-            
+
             toast({
                 title: 'Error',
                 description: errorMessage,
@@ -172,9 +184,13 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ children, onSuccess }) =
         setPassword(''); // Clear password when switching modes
     };
 
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen?.(newOpen);
+    };
+
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+            {children && <DialogTrigger asChild>{children}</DialogTrigger>}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>{isLogin ? 'Login' : 'Register'}</DialogTitle>
@@ -210,18 +226,17 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ children, onSuccess }) =
                             minLength={8}
                             autoComplete={isLogin ? "current-password" : "new-password"}
                         />
-                        
+
                         {!isLogin && password.length > 0 && (
                             <div className="space-y-2 mt-3">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-muted-foreground">Password Strength:</span>
-                                    <span className={`font-semibold ${
-                                        passwordStrength.score <= 1 ? 'text-red-500' :
+                                    <span className={`font-semibold ${passwordStrength.score <= 1 ? 'text-red-500' :
                                         passwordStrength.score === 2 ? 'text-orange-500' :
-                                        passwordStrength.score === 3 ? 'text-yellow-500' :
-                                        passwordStrength.score === 4 ? 'text-blue-500' :
-                                        'text-green-500'
-                                    }`}>
+                                            passwordStrength.score === 3 ? 'text-yellow-500' :
+                                                passwordStrength.score === 4 ? 'text-blue-500' :
+                                                    'text-green-500'
+                                        }`}>
                                         {passwordStrength.label}
                                     </span>
                                 </div>
@@ -231,7 +246,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ children, onSuccess }) =
                                         style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
                                     />
                                 </div>
-                                
+
                                 {passwordStrength.feedback.length > 0 && (
                                     <div className="text-xs text-muted-foreground space-y-1">
                                         <p className="font-semibold">Suggestions to strengthen your password:</p>
@@ -242,7 +257,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ children, onSuccess }) =
                                         </ul>
                                     </div>
                                 )}
-                                
+
                                 {passwordStrength.score >= 3 && (
                                     <div className="text-xs text-green-600 font-semibold">
                                         ✓ Your password looks good!
@@ -250,7 +265,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ children, onSuccess }) =
                                 )}
                             </div>
                         )}
-                        
+
                         {!isLogin && (
                             <div className="bg-muted/50 rounded-md p-3 mt-2 space-y-2">
                                 <p className="text-sm font-semibold text-foreground">Password Requirements:</p>

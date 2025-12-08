@@ -38,6 +38,7 @@ class ScoreResponse(BaseModel):
     id: str
     user_id: str
     username: str
+    display_name: str | None = None
     avatar: str | None = None
     score: int
     created_at: datetime

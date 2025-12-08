@@ -62,7 +62,7 @@ export const Leaderboard: React.FC = () => {
                                     </span>
                                     <UserAvatar avatarString={score.avatar} size="sm" />
                                     <div>
-                                        <p className="font-semibold text-lg">{score.username}</p>
+                                        <p className="font-semibold text-lg">{score.display_name || score.username}</p>
                                         <p className="text-sm text-muted-foreground">
                                             {new Date(score.created_at).toLocaleDateString()}
                                         </p>

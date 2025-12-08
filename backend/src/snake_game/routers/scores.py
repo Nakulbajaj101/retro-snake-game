@@ -23,13 +23,14 @@ def get_leaderboard(limit: int = 10, db: Session = Depends(get_db)):
         .all()
     )
     
-    # Add username to each score
+    # Add username and display_name to each score
     result = []
     for score in scores:
         result.append({
             "id": score.id,
             "user_id": score.user_id,
             "username": score.user.username,
+            "display_name": score.user.display_name,
             "avatar": score.user.avatar,
             "score": score.score,
             "created_at": score.created_at
@@ -56,6 +57,7 @@ def submit_score(
         "id": new_score.id,
         "user_id": new_score.user_id,
         "username": current_user.username,
+        "display_name": current_user.display_name,
         "avatar": current_user.avatar,
         "score": new_score.score,
         "created_at": new_score.created_at

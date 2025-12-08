@@ -51,6 +51,7 @@ export const SnakeGame = () => {
     setScore(0);
     setIsPaused(false);
     setScoreSubmitted(false);
+    setShowLoginDialog(false);
   }, [generateFood]);
 
   const handleSubmitScore = useCallback(async () => {
@@ -72,6 +73,8 @@ export const SnakeGame = () => {
       });
     }
   }, [isAuthenticated, score, scoreSubmitted, toast, queryClient]);
+
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   const checkCollision = useCallback((head: Position, body: Position[]) => {
     // Wall collision
@@ -97,7 +100,7 @@ export const SnakeGame = () => {
         if (score > highScore) {
           setHighScore(score);
         }
-        // Submit score when game ends
+        // Score submission logic is now handled by useEffect
         if (isAuthenticated && score > 0) {
           handleSubmitScore();
         }
@@ -117,7 +120,14 @@ export const SnakeGame = () => {
       newSnake.pop();
       return newSnake;
     });
-  }, [direction, food, gameOver, isPaused, checkCollision, generateFood, score, highScore]);
+  }, [direction, food, gameOver, isPaused, checkCollision, generateFood, score, highScore, isAuthenticated, handleSubmitScore]);
+
+  // Effect to handle auto-opening login dialog on game over
+  useEffect(() => {
+    if (gameOver && !isAuthenticated && score > 0) {
+      setShowLoginDialog(true);
+    }
+  }, [gameOver, isAuthenticated, score]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -270,7 +280,7 @@ export const SnakeGame = () => {
     <div className="flex flex-col items-center justify-center gap-6 p-4">
       <div className="text-center space-y-3">
         <h1 className="text-6xl font-bold text-primary mb-2 tracking-wide drop-shadow-lg">
-          🐍 SNAKE GAME
+          🐍 SNAKE GAME (DEBUG MODE)
         </h1>
 
         {/* User Info */}
@@ -288,11 +298,13 @@ export const SnakeGame = () => {
               </Button>
             </div>
           ) : (
-            <AuthDialog>
-              <Button variant="outline" className="border-2 border-primary">
-                🔐 Login / Register
-              </Button>
-            </AuthDialog>
+            <Button
+              variant="outline"
+              className="border-2 border-primary"
+              onClick={() => setShowLoginDialog(true)}
+            >
+              🔐 Login / Register
+            </Button>
           )}
         </div>
 
@@ -309,6 +321,16 @@ export const SnakeGame = () => {
       </div>
 
       <div className="relative">
+        {/* Render AuthDialog always, allowing it to be controlled via state */}
+        <AuthDialog
+          isOpen={showLoginDialog}
+          onOpenChange={setShowLoginDialog}
+          onSuccess={() => {
+            handleSubmitScore();
+            setShowLoginDialog(false);
+          }}
+        />
+
         <canvas
           ref={canvasRef}
           width={GRID_SIZE * CELL_SIZE}
@@ -317,7 +339,7 @@ export const SnakeGame = () => {
         />
 
         {(gameOver || isPaused) && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-lg backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/95 rounded-lg backdrop-blur-sm z-10">
             <div className="text-center space-y-6 p-8">
               {gameOver ? (
                 <>
@@ -327,17 +349,35 @@ export const SnakeGame = () => {
                   <p className="text-3xl font-bold text-foreground">
                     Your Score: <span className="text-primary">{score}</span>
                   </p>
+
+                  {/* Debug Info - Always visible on Game Over */}
+                  <div className="bg-red-600 text-white p-4 rounded-lg text-sm font-mono my-4 text-left inline-block border-4 border-yellow-400">
+                    <p className="font-bold underline">!!! DEBUG MODE !!!</p>
+                    <p>Game Over: {gameOver ? 'YES' : 'NO'}</p>
+                    <p>Auth: {isAuthenticated ? 'LOGGED IN' : 'GUEST'}</p>
+                    <p>Score: {score}</p>
+                    <p>Dialog Request: {showLoginDialog ? 'OPEN' : 'CLOSED'}</p>
+                  </div>
+
                   {scoreSubmitted && (
                     <p className="text-sm text-green-600 font-semibold">
                       ✅ Score saved to leaderboard!
                     </p>
                   )}
                   {!isAuthenticated && score > 0 && (
-                    <AuthDialog onSuccess={handleSubmitScore}>
-                      <Button variant="outline" className="mb-2">
-                        🔐 Login to Save Score
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-lg font-medium text-muted-foreground">
+                        Register or Login for your scores to reflect
+                      </p>
+
+                      <Button
+                        variant="default"
+                        className="w-full max-w-xs font-semibold animate-pulse"
+                        onClick={() => setShowLoginDialog(true)}
+                      >
+                        🔐 Login / Register
                       </Button>
-                    </AuthDialog>
+                    </div>
                   )}
                   <Button
                     onClick={resetGame}
