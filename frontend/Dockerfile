@@ -42,5 +42,6 @@ USER nginx
 EXPOSE 8080
 
 # Substitute environment variables and start nginx
-# Ensure BACKEND_HOST has full domain and construct BACKEND_URL
-CMD ["/bin/sh", "-c", "case \"${BACKEND_HOST}\" in *.onrender.com) ;; *) export BACKEND_HOST=\"${BACKEND_HOST}.onrender.com\";; esac && export BACKEND_URL=https://${BACKEND_HOST} && envsubst '${PORT} ${BACKEND_URL} ${BACKEND_HOST}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# If BACKEND_URL is not set, construct it from BACKEND_HOST (for Render)
+# If BACKEND_URL is already set (docker-compose), use it as-is
+CMD ["/bin/sh", "-c", "if [ -z \"${BACKEND_URL}\" ]; then case \"${BACKEND_HOST}\" in *.onrender.com) ;; *) export BACKEND_HOST=\"${BACKEND_HOST}.onrender.com\";; esac && export BACKEND_URL=https://${BACKEND_HOST}; fi && envsubst '${PORT} ${BACKEND_URL} ${BACKEND_HOST}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]

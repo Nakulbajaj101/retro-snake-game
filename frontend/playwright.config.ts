@@ -8,7 +8,7 @@ export default defineConfig({
     workers: process.env.CI ? 1 : undefined,
     reporter: 'html',
     use: {
-        baseURL: 'http://localhost:8080',
+        baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
         trace: 'on-first-retry',
     },
 
@@ -19,17 +19,18 @@ export default defineConfig({
         },
     ],
 
-    webServer: [
+    // Only start webServers when NOT in CI (CI uses docker-compose)
+    webServer: process.env.CI ? undefined : [
         {
             command: 'cd ../backend && uv run uvicorn main:app --host 0.0.0.0 --port 3000',
             url: 'http://localhost:3000',
-            reuseExistingServer: !process.env.CI,
+            reuseExistingServer: true,
             timeout: 120000,
         },
         {
             command: 'npm run dev',
             url: 'http://localhost:8080',
-            reuseExistingServer: !process.env.CI,
+            reuseExistingServer: true,
             timeout: 120000,
         },
     ],
