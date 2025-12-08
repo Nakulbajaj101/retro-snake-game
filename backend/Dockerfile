@@ -52,4 +52,4 @@ EXPOSE 8000
 # Using .venv/bin/uvicorn is standard if we synced.
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["uvicorn", "snake_game.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD sh -c "uvicorn snake_game.main:app --host 0.0.0.0 --port ${PORT:-8000}"

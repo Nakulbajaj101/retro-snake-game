@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: snake-backend
+    env: docker
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: snake-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 60
+
+  - type: web
+    name: snake-frontend
+    env: docker
+    dockerContext: frontend
+    dockerfilePath: frontend/Dockerfile
+    plan: free
+    envVars:
+      - key: BACKEND_HOST
+        fromService:
+          type: web
+          name: snake-backend
+          property: host
+      - key: BACKEND_PORT
+        fromService:
+          type: web
+          name: snake-backend
+          property: port
+
+databases:
+  - name: snake-db
+    plan: free
+    databaseName: snake_game
+    user: snake_user

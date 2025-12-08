@@ -24,7 +24,8 @@ RUN rm -rf /usr/share/nginx/html/*
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom nginx configuration to a safe path for custom envsubst
+COPY nginx.conf /etc/nginx/nginx.conf.template
 
 # Configure Nginx to run as non-root
 # Nginx Alpine uses 'nginx' user by default
@@ -38,4 +39,4 @@ USER nginx
 # Expose port 8080 (must match listen port in nginx.conf)
 EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "envsubst '${BACKEND_HOST} ${BACKEND_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
