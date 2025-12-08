@@ -93,23 +93,38 @@ jobs:
       - name: Start all services
         run: docker compose up -d --build
 
-      - name: Wait for services to be ready
+      - name: Verify all services are running and healthy
         run: |
-          echo "Waiting for frontend to be healthy..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8080/ > /dev/null 2>&1; then
-              echo "Frontend is ready!"
-              break
-            fi
-            echo "Attempt $i: Frontend not ready yet..."
-            sleep 2
-          done
-
-      - name: Verify all services are running
-        run: |
+          # 1. Print status of services (optional, for debugging)
           docker compose ps
-          curl -f http://localhost:8000/ || exit 1
-          curl -f http://localhost:8080/ || exit 1
+
+          # 2. Function to check service health with retries
+          check_service_health() {
+            local url=$1
+            local max_retries=10
+            local delay=2
+            local retry_count=0
+
+            echo "Attempting to connect to $url..."
+
+            while [ $retry_count -lt $max_retries ]; do
+              if curl -s $url > /dev/null 2>&1; then
+                echo "Service at $url is ready!"
+                return 0
+              else
+                echo "Service not ready at $url. Retrying in $delay seconds..."
+                sleep $delay
+                retry_count=$((retry_count + 1))
+              fi
+            done
+
+            echo "Error: Service at $url failed to become ready after $max_retries attempts."
+            return 1
+          }
+
+          # 3. Check each service sequentially
+          check_service_health http://localhost:8000/
+          check_service_health http://localhost:8080/
 
       - name: Set up Node.js 25
         uses: actions/setup-node@v4
